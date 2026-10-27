@@ -1,33 +1,58 @@
-import { ShieldCheck, Layers, Zap } from 'lucide-react';
+import { Lock, Zap } from 'lucide-react';
 import SearchBar from '@/components/SearchBar';
-import ModePills from '@/components/ModePills';
-import TrendingChips from '@/components/TrendingChips';
-import { PROMPT_IDEAS } from '@/lib/curated';
+import { useAuth } from '@/context/AuthContext';
+import { cn } from '@/lib/utils';
 
-const PILLARS = [
-  { icon: Zap, title: 'Answers, not links', body: 'Every query is read, cross-checked and written up in seconds.' },
-  { icon: Layers, title: 'Five modes', body: 'From a quick fact to a deep briefing, academic review or build sheet.' },
-  { icon: ShieldCheck, title: 'Private by default', body: 'Your searches live on this device. Nothing is shared or sold.' },
+const SUGGESTIONS = [
+  'How do vector databases index high-dimensional data?',
+  'State of solid-state batteries this year',
+  'Compare Rust and Go for high-throughput services',
+  'Design a zero-trust architecture for a 50-person startup',
 ];
 
 export default function SearchHero({ query, setQuery, mode, setMode, onSubmit }) {
-  return (
-    <div key="hero" className="animate-fade-up mx-auto w-full max-w-3xl px-5 pt-16 sm:pt-24">
-      <div className="text-center">
-        <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full glass px-3.5 py-1.5 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-dew-glow1" />
-          Private search engine
-        </div>
-        <h1 className="font-display text-[2.6rem] font-semibold leading-[1.05] tracking-tight sm:text-6xl">
-          Dewangan<span className="text-gradient">Web</span>
-        </h1>
-        <p className="mx-auto mt-5 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
-          Ask anything. DewanganWeb reads the live web, weighs the sources and hands you a written answer with the
-          receipts attached.
-        </p>
-      </div>
+  const { isIncognito, toggleIncognito } = useAuth();
 
-      <div className="mt-10">
+  return (
+    <div key="hero" className="animate-fade-up w-full max-w-4xl mx-auto flex flex-col items-center justify-center text-center px-4 pt-6 select-none">
+      {/* Top Pill */}
+      <button
+        type="button"
+        onClick={toggleIncognito}
+        title={isIncognito ? "Incognito active (off the record) - click to switch to device vault" : "Click to activate incognito browsing"}
+        className={cn(
+          "mb-5 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-[11px] font-mono tracking-widest uppercase transition-all duration-200 cursor-pointer select-none",
+          isIncognito
+            ? "border border-purple-500/40 bg-purple-950/60 text-purple-300 backdrop-blur-md shadow-[0_0_20px_rgba(168,85,247,0.25)]"
+            : "border border-white/10 bg-white/[0.03] text-muted-foreground hover:border-white/20 hover:text-foreground backdrop-blur-md"
+        )}
+      >
+        {isIncognito ? (
+          <>
+            <span className="text-[13px] leading-none">🕵️</span>
+            <span>OFF THE RECORD · INCOGNITO</span>
+          </>
+        ) : (
+          <>
+            <Lock className="h-3.5 w-3.5 text-cyan-400" />
+            <span>PRIVATE · DEVICE VAULT</span>
+          </>
+        )}
+      </button>
+
+      {/* Main Title */}
+      <h1 className="font-display text-6xl sm:text-7xl font-bold tracking-[-0.03em] bg-gradient-to-r from-white via-[#22d3ee] to-[#0ea5e9] bg-clip-text text-transparent">
+        DewanganWeb
+      </h1>
+
+      {/* Subtitle */}
+      <p className="mt-4 max-w-md text-center text-[15px] leading-relaxed text-muted-foreground">
+        Private AI search with cited answers, deep research and a live knowledge graph.
+      </p>
+
+      {/* Search Input Container with Faint Teal Glow */}
+      <div className="relative z-20 mt-8 w-full max-w-3xl">
+        <div className="pointer-events-none absolute -inset-6 -z-10 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(34,211,238,0.14),transparent_70%)] blur-2xl" />
         <SearchBar
           value={query}
           onChange={setQuery}
@@ -37,42 +62,33 @@ export default function SearchHero({ query, setQuery, mode, setMode, onSubmit })
           autoFocus
           focusShortcut
         />
-        <div className="mt-4 flex justify-center">
-          <ModePills value={mode} onChange={setMode} scope="hero" />
-        </div>
       </div>
 
-      <div className="mt-8 flex flex-wrap justify-center gap-2">
-        {PROMPT_IDEAS.map((idea) => (
+      {/* Suggestion Chips */}
+      <div className="mt-6 flex flex-wrap justify-center gap-2.5 max-w-3xl">
+        {SUGGESTIONS.map((idea) => (
           <button
             key={idea}
-            onClick={() => setQuery(idea)}
-            className="rounded-full border border-white/10 bg-white/[0.02] px-3.5 py-1.5 text-[12px] text-muted-foreground transition hover:border-white/25 hover:text-foreground"
+            onClick={() => (onSubmit ? onSubmit(idea, mode) : setQuery(idea))}
+            className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[13px] text-muted-foreground transition hover:border-cyan-500/30 hover:bg-white/[0.08] hover:text-foreground"
           >
             {idea}
           </button>
         ))}
       </div>
 
-      <section className="mt-16">
-        <div className="mb-4 flex items-end justify-between">
-          <h2 className="font-heading text-[13px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            Trending questions
-          </h2>
-          <span className="text-[11px] text-muted-foreground/60">Curated starting points</span>
-        </div>
-        <TrendingChips onPick={onSubmit} />
-      </section>
-
-      <section className="mt-14 grid gap-3 pb-8 sm:grid-cols-3">
-        {PILLARS.map((p) => (
-          <div key={p.title} className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
-            <p.icon className="h-4 w-4 text-dew-glow1" />
-            <div className="mt-3 text-[13.5px] font-medium text-foreground">{p.title}</div>
-            <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted-foreground">{p.body}</p>
-          </div>
-        ))}
-      </section>
+      {/* Bottom Keyboard Hints */}
+      <div className="mt-6 flex items-center justify-center gap-4 text-[11px] font-mono tracking-wider text-muted-foreground/60">
+        <span className="flex items-center gap-1.5">
+          <kbd className="rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-muted-foreground">/</kbd> FOCUS
+        </span>
+        <span className="flex items-center gap-1.5">
+          <kbd className="rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-muted-foreground">⌘K</kbd> PALETTE
+        </span>
+        <span className="flex items-center gap-1 text-muted-foreground/75">
+          <Zap className="h-3 w-3 text-cyan-400" /> LIVE WEB
+        </span>
+      </div>
     </div>
   );
 }

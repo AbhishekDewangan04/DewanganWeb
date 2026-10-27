@@ -103,7 +103,8 @@ export function useHistory() {
 
 export function addToHistory(entry) {
   const state = read();
-  if (!state.prefs.saveHistory) return;
+  const isIncognito = (typeof window !== 'undefined' && window.sessionStorage.getItem('dew_incognito') === 'true') || Boolean(entry?.incognito);
+  if (!state.prefs.saveHistory || isIncognito) return;
   const trimmed = {
     ...entry,
     answer: (entry.answer || '').slice(0, 6000),

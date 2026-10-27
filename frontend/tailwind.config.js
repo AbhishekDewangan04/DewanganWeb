@@ -80,7 +80,8 @@ module.exports = {
         mono: ['var(--font-mono)']
       },
       boxShadow: {
-        glass: '0 1px 0 0 hsl(0 0% 100% / 0.06) inset, 0 24px 70px -30px hsl(0 0% 0% / 0.9)',
+        glass: 'inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 30px -8px rgba(6, 182, 212, 0.25)',
+        'glass-glow': 'inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 30px -8px rgba(6, 182, 212, 0.35)',
         neon: '0 0 0 1px hsl(var(--glow-1) / 0.25), 0 20px 70px -25px hsl(var(--glow-1) / 0.5)'
       },
       transitionTimingFunction: {

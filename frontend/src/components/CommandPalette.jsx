@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Search, Compass, Clock, Palette, ArrowRight, CornerDownLeft } from 'lucide-react';
+import { Search, Compass, Clock, Palette, ArrowRight } from 'lucide-react';
 import { useHistory } from '@/lib/store';
 import { getMode } from '@/lib/modes';
 import { cn } from '@/lib/utils';
@@ -80,7 +80,7 @@ export default function CommandPalette({ open, onClose }) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={onClose} />
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose} />
           <motion.div
             role="dialog"
             aria-modal="true"
@@ -89,58 +89,73 @@ export default function CommandPalette({ open, onClose }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.98 }}
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-            className="relative w-full max-w-xl overflow-hidden rounded-3xl glass-2 hairline-top shadow-glass"
+            className="relative w-full max-w-xl overflow-hidden rounded-3xl bg-[#06121b] border border-cyan-400/30 shadow-[0_0_60px_-10px_rgba(6,182,212,0.35),0_30px_80px_rgba(0,0,0,0.8)]"
           >
             <div className="flex items-center gap-3 border-b border-white/10 px-4 py-3.5">
-              <Search className="h-4 w-4 text-muted-foreground" />
+              <Search className="h-4 w-4 text-cyan-400 shrink-0" />
               <input
                 ref={inputRef}
                 value={term}
                 onChange={(e) => setTerm(e.target.value)}
                 onKeyDown={onKeyDown}
                 placeholder="Jump to a page or re-run a search…"
-                className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
+                className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/60 text-foreground"
               />
-              <kbd className="rounded-md border border-white/10 bg-white/[0.05] px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">esc</kbd>
+              <kbd className="rounded-md border border-white/10 bg-white/[0.08] px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">esc</kbd>
             </div>
 
             <div className="max-h-[52vh] overflow-y-auto p-2 scroll-none">
               {items.length === 0 && (
                 <div className="px-3 py-6 text-center text-sm text-muted-foreground">Nothing matched that.</div>
               )}
-              {items.map((item, i) => (
-                <button
-                  key={`${item.kind}-${item.label}-${i}`}
-                  onMouseEnter={() => setIndex(i)}
-                  onClick={() => go(item)}
-                  className={cn(
-                    'flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm transition-colors',
-                    i === index ? 'bg-white/[0.07] text-foreground' : 'text-muted-foreground',
-                  )}
-                >
-                  <item.icon className="h-4 w-4 shrink-0" />
-                  <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                  {item.kind === 'recent' ? (
-                    <span className="shrink-0 text-[10.5px] uppercase tracking-wider text-muted-foreground/70">
-                      {getMode(item.mode).label}
-                    </span>
-                  ) : (
-                    <span className="flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground/70">
-                      {item.hint}
-                      <ArrowRight className="h-3 w-3" />
-                    </span>
-                  )}
-                </button>
-              ))}
+              {items.map((item, i) => {
+                const isFirstOfKind = i === 0 || item.kind !== items[i - 1]?.kind;
+                const isSelected = i === index;
+                return (
+                  <div key={`${item.kind}-${item.label}-${i}`}>
+                    {isFirstOfKind && (
+                      <div className="px-3 pt-3 pb-1.5 font-mono text-[10.5px] uppercase tracking-widest text-muted-foreground/60 select-none">
+                        {item.kind === 'page' ? 'Pages' : 'Recent searches'}
+                      </div>
+                    )}
+                    <button
+                      onMouseEnter={() => setIndex(i)}
+                      onClick={() => go(item)}
+                      className={cn(
+                        'group relative flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm transition-all duration-150 cursor-pointer overflow-hidden',
+                        isSelected ? 'bg-cyan-950/40 text-foreground' : 'text-muted-foreground hover:bg-white/[0.04] hover:text-foreground',
+                      )}
+                    >
+                      {isSelected && (
+                        <span className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.8)]" />
+                      )}
+                      <item.icon className={cn('h-4 w-4 shrink-0 transition-colors', isSelected ? 'text-cyan-400' : 'text-muted-foreground')} />
+                      <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                      {item.kind === 'recent' ? (
+                        <span className="shrink-0 text-[10.5px] uppercase tracking-wider text-muted-foreground/70">
+                          {getMode(item.mode).label}
+                        </span>
+                      ) : (
+                        <span className="flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground/70">
+                          {item.hint}
+                          <ArrowRight className="h-3 w-3" />
+                        </span>
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
 
             <div className="flex items-center justify-between border-t border-white/10 px-4 py-2.5 text-[11px] text-muted-foreground/70">
               <span className="flex items-center gap-1.5">
-                <CornerDownLeft className="h-3 w-3" /> to open
+                <kbd className="rounded-md border border-white/10 bg-white/[0.08] px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">↵</kbd>
+                <span>to open</span>
               </span>
               <span className="flex items-center gap-1.5">
-                <kbd className="rounded border border-white/10 px-1 font-mono">↑</kbd>
-                <kbd className="rounded border border-white/10 px-1 font-mono">↓</kbd> to move
+                <kbd className="rounded-md border border-white/10 bg-white/[0.08] px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">↑</kbd>
+                <kbd className="rounded-md border border-white/10 bg-white/[0.08] px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">↓</kbd>
+                <span>to move</span>
               </span>
             </div>
           </motion.div>

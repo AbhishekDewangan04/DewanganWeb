@@ -1,4 +1,4 @@
-import { Globe, Layers, GraduationCap, Code2, Clapperboard } from 'lucide-react';
+import { Globe, Telescope, GraduationCap, Code2, Clapperboard } from 'lucide-react';
 
 export const MODES = [
   {
@@ -13,7 +13,7 @@ export const MODES = [
   {
     id: 'research',
     label: 'Deep Research',
-    icon: Layers,
+    icon: Telescope,
     accent: 'indigo',
     blurb: 'Wide scan, structured long-form briefing.',
     placeholder: 'Map out a topic end to end…',

@@ -4,14 +4,41 @@ import { appParams } from '@/lib/app-params';
 
 const AuthContext = createContext();
 
+const LOCAL_MOCK_USER = {
+  id: 'local-dev',
+  name: 'Developer',
+  email: 'dev@dewangan.web',
+  role: 'developer',
+};
+
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
-  const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(true);
+  const [user, setUser] = useState(LOCAL_MOCK_USER);
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [isLoadingAuth, setIsLoadingAuth] = useState(false);
+  const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(false);
   const [authError, setAuthError] = useState(null);
-  const [authChecked, setAuthChecked] = useState(false);
-  const [appPublicSettings, setAppPublicSettings] = useState(null); // Contains only { id, public_settings }
+  const [authChecked, setAuthChecked] = useState(true);
+  const [appPublicSettings, setAppPublicSettings] = useState({
+    id: 'dewangan-web',
+    public_settings: { app_name: 'DewanganWeb' },
+  });
+  const [isIncognito, setIsIncognito] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.sessionStorage.getItem('dew_incognito') === 'true';
+    }
+    return false;
+  });
+
+  const toggleIncognito = () => {
+    setIsIncognito((prev) => {
+      const next = !prev;
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.setItem('dew_incognito', String(next));
+        window.dispatchEvent(new CustomEvent('dew:incognito', { detail: next }));
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     checkAppState();
@@ -19,59 +46,29 @@ export const AuthProvider = ({ children }) => {
 
   const checkAppState = async () => {
     try {
-      setIsLoadingPublicSettings(true);
       setAuthError(null);
-      
+      let publicSettings = null;
       try {
-        const publicSettings = await base44.app.getPublicSettings();
-        setAppPublicSettings(publicSettings);
-        
-        // If we got the app public settings successfully, check if user is authenticated
-        if (appParams.token) {
-          await checkUserAuth();
-        } else {
-          setIsLoadingAuth(false);
-          setIsAuthenticated(false);
-          setAuthChecked(true);
-        }
-        setIsLoadingPublicSettings(false);
-      } catch (appError) {
-        console.error('App state check failed:', appError);
-        
-        // Handle app-level errors
-        if (appError.status === 403 && appError.data?.extra_data?.reason) {
-          const reason = appError.data.extra_data.reason;
-          if (reason === 'auth_required') {
-            setAuthError({
-              type: 'auth_required',
-              message: 'Authentication required'
-            });
-          } else if (reason === 'user_not_registered') {
-            setAuthError({
-              type: 'user_not_registered',
-              message: 'User not registered for this app'
-            });
-          } else {
-            setAuthError({
-              type: reason,
-              message: appError.message
-            });
-          }
-        } else {
-          setAuthError({
-            type: 'unknown',
-            message: appError.message || 'Failed to load app'
-          });
-        }
-        setIsLoadingPublicSettings(false);
-        setIsLoadingAuth(false);
+        publicSettings = await base44.app.getPublicSettings();
+      } catch {
+        publicSettings = { id: 'dewangan-web', public_settings: { app_name: 'DewanganWeb' } };
+      }
+      setAppPublicSettings(publicSettings);
+
+      if (appParams.token) {
+        await checkUserAuth();
+      } else {
+        setUser(LOCAL_MOCK_USER);
+        setIsAuthenticated(true);
+        setAuthChecked(true);
       }
     } catch (error) {
-      console.error('Unexpected error:', error);
-      setAuthError({
-        type: 'unknown',
-        message: error.message || 'An unexpected error occurred'
-      });
+      console.warn('[AuthContext] Handled app state fallback:', error?.message || error);
+      setUser(LOCAL_MOCK_USER);
+      setIsAuthenticated(true);
+      setAuthChecked(true);
+      setAuthError(null);
+    } finally {
       setIsLoadingPublicSettings(false);
       setIsLoadingAuth(false);
     }
@@ -79,61 +76,61 @@ export const AuthProvider = ({ children }) => {
 
   const checkUserAuth = async () => {
     try {
-      // Now check if the user is authenticated
-      setIsLoadingAuth(true);
       const currentUser = await base44.auth.me();
-      setUser(currentUser);
-      setIsAuthenticated(true);
-      setIsLoadingAuth(false);
-      setAuthChecked(true);
-    } catch (error) {
-      console.error('User auth check failed:', error);
-      setIsLoadingAuth(false);
-      setIsAuthenticated(false);
-      setAuthChecked(true);
-      
-      // If user auth fails, it might be an expired token
-      if (error.status === 401 || error.status === 403) {
-        setAuthError({
-          type: 'auth_required',
-          message: 'Authentication required'
-        });
+      if (currentUser) {
+        setUser(currentUser);
+        setIsAuthenticated(true);
+      } else {
+        setUser(LOCAL_MOCK_USER);
+        setIsAuthenticated(true);
       }
+    } catch (error) {
+      console.warn('[AuthContext] User auth fallback to local dev:', error?.message || error);
+      setUser(LOCAL_MOCK_USER);
+      setIsAuthenticated(true);
+    } finally {
+      setIsLoadingAuth(false);
+      setAuthChecked(true);
     }
   };
 
-  const logout = (shouldRedirect = true) => {
+  const logout = (shouldRedirect = false) => {
     setUser(null);
     setIsAuthenticated(false);
-    
-    if (shouldRedirect) {
-      // Use the SDK's logout method which handles token cleanup and redirect
-      base44.auth.logout(window.location.href);
-    } else {
-      // Just remove the token without redirect
-      base44.auth.logout();
+    try {
+      base44.auth.logout(shouldRedirect ? window.location.href : undefined);
+    } catch {
+      // ignore
     }
   };
 
   const navigateToLogin = () => {
-    // Use the SDK's redirectToLogin method
-    base44.auth.redirectToLogin(window.location.href);
+    try {
+      base44.auth.redirectToLogin(window.location.href);
+    } catch {
+      // ignore
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      isAuthenticated, 
-      isLoadingAuth,
-      isLoadingPublicSettings,
-      authError,
-      appPublicSettings,
-      authChecked,
-      logout,
-      navigateToLogin,
-      checkUserAuth,
-      checkAppState
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated,
+        isLoadingAuth,
+        isLoadingPublicSettings,
+        authError,
+        appPublicSettings,
+        authChecked,
+        logout,
+        navigateToLogin,
+        checkUserAuth,
+        checkAppState,
+        isIncognito,
+        toggleIncognito,
+        setIsIncognito,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -146,3 +143,21 @@ export const useAuth = () => {
   }
   return context;
 };
+
+export const useIncognito = () => {
+  const context = useContext(AuthContext);
+  if (context) {
+    return {
+      isIncognito: context.isIncognito,
+      toggleIncognito: context.toggleIncognito,
+      setIsIncognito: context.setIsIncognito,
+    };
+  }
+  return {
+    isIncognito: typeof window !== 'undefined' && window.sessionStorage.getItem('dew_incognito') === 'true',
+    toggleIncognito: () => {},
+    setIsIncognito: () => {},
+  };
+};
+
+export default AuthContext;

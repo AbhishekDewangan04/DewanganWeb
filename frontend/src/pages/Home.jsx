@@ -8,10 +8,12 @@ import { base44 } from '@/api/base44Client';
 import { addToHistory, findSavedId, getState, toggleSaved, usePrefs, uid } from '@/lib/store';
 import { getMode } from '@/lib/modes';
 import { setSearchPhase } from '@/lib/searchSignal';
+import { useAuth } from '../lib/AuthContext';
 
 export default function Home() {
   const [searchParams, setSearchParams] = useSearchParams();
   const prefs = usePrefs();
+  const { isIncognito, toggleIncognito } = useAuth();
 
   const queryParam = searchParams.get('q') || '';
   const modeParam = searchParams.get('mode');
@@ -37,29 +39,31 @@ export default function Home() {
     setResult(null);
     setElapsed(null);
     try {
-      const res = await base44.functions.invoke('aiSearch', { query: q, mode: m });
+      const res = await base44.functions.invoke('aiSearch', { query: q, mode: m, incognito: isIncognito });
       const data = res?.data;
       if (!data || data.error) throw new Error(data?.error || 'The search service did not respond.');
       setResult(data);
       setSearchPhase('answering', 2400);
       setElapsed(Date.now() - started);
       setSaved(Boolean(getState().history.find((h) => h.query === q && h.mode === m)?.saved));
-      addToHistory({
-        id: uid(),
-        query: q,
-        mode: m,
-        answer: data.answer,
-        sources: data.sources,
-        created_date: new Date().toISOString(),
-        elapsed_ms: Date.now() - started,
-      });
+      if (!isIncognito) {
+        addToHistory({
+          id: uid(),
+          query: q,
+          mode: m,
+          answer: data.answer,
+          sources: data.sources,
+          created_date: new Date().toISOString(),
+          elapsed_ms: Date.now() - started,
+        });
+      }
     } catch (e) {
       setError(e?.message || 'Something went wrong while searching.');
       setSearchPhase('idle');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isIncognito]);
 
   useEffect(() => {
     const key = `${queryParam}|${mode}`;

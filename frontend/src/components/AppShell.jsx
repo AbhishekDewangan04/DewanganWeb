@@ -9,7 +9,6 @@ import { applyTheme, usePrefs } from '@/lib/store';
 export default function AppShell() {
   const prefs = usePrefs();
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     applyTheme(prefs);
@@ -29,8 +28,8 @@ export default function AppShell() {
   return (
     <div className="relative min-h-screen">
       <AmbientBackground />
-      <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} onOpenPalette={() => setPaletteOpen(true)} />
-      <main className={`min-h-screen pb-28 lg:pb-10 lg:pl-[300px] transition-[padding] duration-500 ease-silk ${collapsed ? 'lg:pl-[108px]' : ''}`}>
+      <Sidebar onOpenPalette={() => setPaletteOpen(true)} />
+      <main className="min-h-screen w-full pb-28 lg:pb-10">
         <Outlet />
       </main>
       <MobileNav onOpenPalette={() => setPaletteOpen(true)} />

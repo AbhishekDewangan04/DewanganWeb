@@ -6,7 +6,7 @@
   :root,
   .dark {
     /* ---- surface tokens (dark, arc-inspired) ---- */
-    --background: 232 44% 4%;
+    --background: 210 50% 3.1%;
     --foreground: 210 24% 96%;
     --card: 231 30% 7%;
     --card-foreground: 210 24% 96%;
@@ -48,7 +48,7 @@
     --dew-emerald: 158 64% 52%;
     --dew-violet: 258 90% 76%;
     --dew-amber: 38 92% 60%;
-    --dew-ink: 232 44% 4%;
+    --dew-ink: 210 50% 3.1%;
 
     /* dynamic theme-shifting hooks (rewritten at runtime) */
     --glow-1: var(--dew-cyan);
@@ -105,18 +105,20 @@
 
 @layer components {
   /* ---------- glass surfaces ---------- */
-  .glass {
-    background-color: hsl(var(--card) / var(--glass-alpha));
-    backdrop-filter: blur(var(--glass-blur)) saturate(150%);
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
-    border: 1px solid hsl(var(--hairline));
+  .glass,
+  .glass-2 {
+    background-color: rgba(15, 58, 74, 0.3);
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    border: 1px solid rgba(34, 211, 238, 0.25);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
   }
 
-  .glass-2 {
-    background-color: hsl(var(--card) / calc(var(--glass-alpha) * 1.8));
-    backdrop-filter: blur(calc(var(--glass-blur) * 1.4)) saturate(160%);
-    -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 1.4)) saturate(160%);
-    border: 1px solid hsl(var(--hairline));
+  .glass:hover,
+  .glass-2:hover {
+    border-color: rgba(34, 211, 238, 0.45);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 30px -8px rgba(6, 182, 212, 0.35);
   }
 
   .hairline-top {

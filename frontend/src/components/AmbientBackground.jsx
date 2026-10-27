@@ -3,7 +3,7 @@ import HeroSphere from '@/components/three/HeroSphere';
 export default function AmbientBackground() {
   return (
     <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-      <div className="absolute inset-0 bg-dew-ink" />
+      <div className="absolute inset-0 bg-[#04080c]" />
 
       <div className="absolute -top-[26rem] left-1/2 h-[52rem] w-[52rem] -translate-x-1/2 animate-aurora rounded-full bg-[radial-gradient(circle_at_center,hsl(var(--glow-1)/0.22),transparent_62%)] blur-3xl" />
       <div
