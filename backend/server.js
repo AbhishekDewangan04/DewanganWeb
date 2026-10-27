@@ -90,7 +90,11 @@ app.use(['/api/*', '/apps/*'], (req, res) => {
   res.status(404).json({ error: `Endpoint ${req.originalUrl} not found` });
 });
 
-app.listen(PORT, () => {
-  console.log(`[DewanganWeb Backend] Production API Server listening on http://localhost:${PORT}`);
-  console.log(`[DewanganWeb Backend] Health check: http://localhost:${PORT}/api/health`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`[DewanganWeb Backend] Production API Server listening on http://localhost:${PORT}`);
+    console.log(`[DewanganWeb Backend] Health check: http://localhost:${PORT}/api/health`);
+  });
+}
+
+export default app;
